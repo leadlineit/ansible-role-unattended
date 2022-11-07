@@ -1,0 +1,204 @@
+{{ ansible_managed | comment('c') }}
+// Unattended-Upgrade::Origins-Pattern controls which packages are upgraded.
+Unattended-Upgrade::Origins-Pattern {
+//      "origin=Debian,codename=${distro_codename}-updates";
+//      "origin=Debian,codename=${distro_codename}-proposed-updates";
+        "origin=Debian,codename=${distro_codename},label=Debian";
+        "origin=Debian,codename=${distro_codename},label=Debian-Security";
+        "origin=Debian,codename=${distro_codename}-security,label=Debian-Security";
+
+//      "o=Debian,a=stable";
+//      "o=Debian,a=stable-updates";
+//      "o=Debian,a=proposed-updates";
+//      "o=Debian Backports,a=${distro_codename}-backports,l=Debian Backports";
+};
+
+// List of packages to not update (regexp are supported)
+Unattended-Upgrade::Package-Blacklist {
+{% if unattended.blacklist is defined %}
+{% for v in unattended.blacklist %}
+        "{{ v }}";
+{% endfor %}
+{% endif %}
+};
+
+{% if unattended.options is defined %}
+// This option allows you to control if on a unclean dpkg exit
+// unattended-upgrades will automatically run 
+//   dpkg --force-confold --configure -a
+// The default is true, to ensure updates keep getting installed
+{% if unattended.options.auto_fix_interrupted_dpkg is defined %}
+Unattended-Upgrade::AutoFixInterruptedDpkg "{{ unattended.options.auto_fix_interrupted_dpkg }}";
+{% else %}
+//Unattended-Upgrade::AutoFixInterruptedDpkg "true";
+{% endif %}
+
+// Split the upgrade into the smallest possible chunks so that
+// they can be interrupted with SIGTERM. This makes the upgrade
+// a bit slower but it has the benefit that shutdown while a upgrade
+// is running is possible (with a small delay)
+{% if unattended.options.minimal_steps is defined %}
+Unattended-Upgrade::MinimalSteps "{{ unattended.options.minimal_steps }}";
+{% else %}
+// Unattended-Upgrade::MinimalSteps "true";
+{% endif %}
+
+// Install all updates when the machine is shutting down
+// instead of doing it in the background while the machine is running.
+// This will (obviously) make shutdown slower.
+// Unattended-upgrades increases logind's InhibitDelayMaxSec to 30s.
+// This allows more time for unattended-upgrades to shut down gracefully
+// or even install a few packages in InstallOnShutdown mode, but is still a
+// big step back from the 30 minutes allowed for InstallOnShutdown previously.
+// Users enabling InstallOnShutdown mode are advised to increase
+// InhibitDelayMaxSec even further, possibly to 30 minutes.
+{% if unattended.options.install_on_shutdown is defined %}
+Unattended-Upgrade::InstallOnShutdown "{{ unattended.options.install_on_shutdown }}";
+{% else %}
+// Unattended-Upgrade::InstallOnShutdown "false";
+{% endif %}
+
+// Send email to this address for problems or packages upgrades
+// If empty or unset then no email is sent, make sure that you
+// have a working mail setup on your system. A package that provides
+// 'mailx' must be installed. E.g. "user@example.com"
+{% if unattended.options.mail is defined %}
+Unattended-Upgrade::Mail "{{ unattended.options.mail }}";
+{% else %}
+// Unattended-Upgrade::Mail "";
+{% endif %}
+
+// Set this value to one of:
+//    "always", "only-on-error" or "on-change"
+// If this is not set, then any legacy MailOnlyOnError (boolean) value
+// is used to chose between "only-on-error" and "on-change"
+{% if unattended.options.mail_report is defined %}
+Unattended-Upgrade::MailReport "{{ unattended.options.mail_report }}";
+{% else %}
+// Unattended-Upgrade::MailReport "on-change";
+{% endif %}
+
+// Remove unused automatically installed kernel-related packages
+// (kernel images, kernel headers and kernel version locked tools).
+{% if unattended.options.remove_unused_kernel_packages is defined %}
+Unattended-Upgrade::Remove-Unused-Kernel-Packages "{{ unattended.options.remove_unused_kernel_packages }}";
+{% else %}
+//Unattended-Upgrade::Remove-Unused-Kernel-Packages "true";
+{% endif %}
+
+// Do automatic removal of newly unused dependencies after the upgrade
+{% if unattended.options.remove_new_unused_dependencies is defined %}
+Unattended-Upgrade::Remove-New-Unused-Dependencies "{{ unattended.options.remove_new_unused_dependencies }}";
+{% else %}
+// Unattended-Upgrade::Remove-New-Unused-Dependencies "true";
+{% endif %}
+
+// Do automatic removal of unused packages after the upgrade
+// (equivalent to apt-get autoremove)
+{% if unattended.options.remove_unused_dependencies is defined %}
+Unattended-Upgrade::Remove-Unused-Dependencies "{{ unattended.options.remove_unused_dependencies }}";
+{% else %}
+// Unattended-Upgrade::Remove-Unused-Dependencies "false";
+{% endif %}
+
+// Automatically reboot *WITHOUT CONFIRMATION* if
+//  the file /var/run/reboot-required is found after the upgrade
+{% if unattended.options.automatic_reboot is defined %}
+Unattended-Upgrade::Automatic-Reboot "{{ unattended.options.automatic_reboot }}";
+{% else %}
+// Unattended-Upgrade::Automatic-Reboot "false";
+{% endif %}
+
+// Automatically reboot even if there are users currently logged in
+// when Unattended-Upgrade::Automatic-Reboot is set to true
+{% if unattended.options.automatic_reboot_with_users is defined %}
+Unattended-Upgrade::Automatic-Reboot-WithUsers "{{ unattended.options.automatic_reboot_with_users }}";
+{% else %}
+// Unattended-Upgrade::Automatic-Reboot-WithUsers "true";
+{% endif %}
+
+// If automatic reboot is enabled and needed, reboot at the specific
+// time instead of immediately
+//  Default: "now"
+{% if unattended.options.automatic_reboot_time is defined %}
+Unattended-Upgrade::Automatic-Reboot-Time "{{ unattended.options.automatic_reboot_time }}";
+{% else %}
+// Unattended-Upgrade::Automatic-Reboot-Time "02:00";
+{% endif %}
+
+// Use apt bandwidth limit feature, this example limits the download
+// speed to 70kb/sec
+{% if unattended.options.dl_limit is defined %}
+Acquire::http::Dl-Limit "{{ unattended.options.dl_limit }}";
+{% else %}
+// Acquire::http::Dl-Limit "70";
+{% endif %}
+
+// Enable logging to syslog. Default is False
+{% if unattended.options.sys_log_enable is defined %}
+Unattended-Upgrade::SyslogEnable "{{ unattended.options.sys_log_enable }}";
+{% else %}
+// Unattended-Upgrade::SyslogEnable "false";
+{% endif %}
+
+// Specify syslog facility. Default is daemon
+{% if unattended.options.sys_log_facility is defined %}
+Unattended-Upgrade::SyslogFacility "{{ unattended.options.sys_log_facility }}";
+{% else %}
+// Unattended-Upgrade::SyslogFacility "daemon";
+{% endif %}
+
+// Download and install upgrades only on AC power
+// (i.e. skip or gracefully stop updates on battery)
+{% if unattended.options.only_on_ac_power is defined %}
+Unattended-Upgrade::OnlyOnACPower "{{ unattended.options.only_on_ac_power }}";
+{% else %}
+// Unattended-Upgrade::OnlyOnACPower "true";
+{% endif %}
+
+// Download and install upgrades only on non-metered connection
+// (i.e. skip or gracefully stop updates on a metered connection)
+{% if unattended.options.skip_updates_on_metered_connections is defined %}
+Unattended-Upgrade::Skip-Updates-On-Metered-Connections "{{ unattended.options.skip_updates_on_metered_connections }}";
+{% else %}
+// Unattended-Upgrade::Skip-Updates-On-Metered-Connections "true";
+{% endif %}
+
+// Verbose logging
+{% if unattended.options.verbose is defined %}
+Unattended-Upgrade::Verbose "{{ unattended.options.verbose }}";
+{% else %}
+// Unattended-Upgrade::Verbose "false";
+{% endif %}
+
+// Print debugging information both in unattended-upgrades and
+// in unattended-upgrade-shutdown
+{% if unattended.options.debug is defined %}
+Unattended-Upgrade::Debug "{{ unattended.options.debug }}";
+{% else %}
+// Unattended-Upgrade::Debug "false";
+{% endif %}
+
+// Allow package downgrade if Pin-Priority exceeds 1000
+{% if unattended.options.allow_downgrade is defined %}
+Unattended-Upgrade::Allow-downgrade "{{ unattended.options.allow_downgrade }}";
+{% else %}
+// Unattended-Upgrade::Allow-downgrade "false";
+{% endif %}
+
+// When APT fails to mark a package to be upgraded or installed try adjusting
+// candidates of related packages to help APT's resolver in finding a solution
+// where the package can be upgraded or installed.
+// This is a workaround until APT's resolver is fixed to always find a
+// solution if it exists. (See Debian bug #711128.)
+// The fallback is enabled by default, except on Debian's sid release because
+// uninstallable packages are frequent there.
+// Disabling the fallback speeds up unattended-upgrades when there are
+// uninstallable packages at the expense of rarely keeping back packages which
+// could be upgraded or installed.
+{% if unattended.options.allow_apt_mark_fallback is defined %}
+Unattended-Upgrade::Allow-APT-Mark-Fallback "{{ unattended.options.allow_apt_mark_fallback }}";
+{% else %}
+// Unattended-Upgrade::Allow-APT-Mark-Fallback "true";
+{% endif %}
+{% endif %}

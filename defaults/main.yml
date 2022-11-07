@@ -1,0 +1,27 @@
+---
+unattended:
+  blacklist:
+    - mysql-server
+    - php7.3
+    - nginx
+  options:
+    auto_fix_interrupted_dpkg: "true"
+    minimal_steps: "true"
+    install_on_shutdown: "false"
+    mail: "mail@somedomain.com"
+    mail_report: "on-change"
+    remove_unused_kernel_packages: "true"
+    remove_new_unused_dependencies: "true"
+    remove_unused_dependencies: "false"
+    automatic_reboot: "false"
+    automatic_reboot_with_users: "true"
+    automatic_reboot_time: "02:00"
+    dl_limit: "70"
+    sys_log_enable: "false"
+    sys_log_facility: "Daemon"
+    only_on_ac_power: "true"
+    skip_updates_on_metered_connections: "true"
+    verbose: "false"
+    debug: "false"
+    allow_downgrade: "false"
+    allow_apt_mark_fallback: "true"

@@ -1,0 +1,18 @@
+---
+galaxy_info:
+  role_name: unattended
+  namespace: leadlineit
+  author: Artem Kasianchuk
+  description: Install and configure unattended-upgrades
+  license: BSD
+  min_ansible_version: '2.5'
+  platforms:
+    - name: Debian
+      versions:
+        - bullseye
+        - buster
+        - stretch
+  galaxy_tags:
+    - system
+    - debian
+    - unattended
